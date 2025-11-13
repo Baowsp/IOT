@@ -6,13 +6,13 @@
       "src": "https://placehold.co/192x192/3b82f6/FFFFFF?text=SH",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "https://placehold.co/512x512/3b82f6/FFFFFF?text=SmartHome",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "start_url": "smart_home_app.html",
@@ -20,4 +20,5 @@
   "background_color": "#111827",
   "theme_color": "#1f2937",
   "orientation": "portrait-primary"
+
 }
