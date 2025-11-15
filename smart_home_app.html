@@ -227,7 +227,7 @@
         function updateCameraStream() {
             if (serverIp) {
                 // Giả định ESP32-CAM stream tại port 81 và path /stream
-                const streamUrl = `http://${serverIp}:81/stream`;
+                const streamUrl = `http://${serverIp}:5000/stream`;
                 cameraStream.src = streamUrl;
                 cameraStream.classList.remove('hidden');
                 cameraPlaceholder.classList.add('hidden');
@@ -368,3 +368,4 @@
     </script>
 </body>
 </html>
+
