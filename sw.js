@@ -1,31 +1,29 @@
-// Tên của cache
-const CACHE_NAME = 'smart-home-pwa-v1';
+// sw.js - Phiên bản đã sửa lỗi
 
-// Các tệp cần cache để chạy offline
-// Quan trọng: Phải đổi tên 'index.html' thành tên file HTML của bạn
+const CACHE_NAME = 'smart-home-pwa-v2'; // Đổi tên cache để trình duyệt biết có cập nhật
+
+// Danh sách file cần cache (Bao gồm cả thư viện online)
 const FILES_TO_CACHE = [
-  'smart_home_app.html',
-  'manifest.json'
-  // Bạn có thể thêm các link CDN (Tailwind, Lucide) vào đây nếu muốn,
-  // nhưng nó phức tạp hơn và cần xử lý CORS.
-  // Hiện tại, chúng ta chỉ cache các file cục bộ.
+  './smart_home_app.html', // Đảm bảo tên file HTML của bạn đúng y hệt thế này
+  './manifest.json',
+  
+  // Cache luôn các thư viện CDN để app không bị vỡ giao diện khi Offline
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/lucide@latest/dist/umd/lucide.js',
+  'https://cdn.socket.io/4.7.2/socket.io.min.js'
 ];
 
-// Cài đặt Service Worker và cache các tệp cơ bản
 self.addEventListener('install', (event) => {
   console.log('SW: Đang cài đặt...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Đang cache các tệp cơ bản');
-      // Thêm các tệp vào cache.
-      // fetch() là cần thiết vì addAll() sẽ tự fetch các request.
+      // Dùng {cache: 'reload'} để ép trình duyệt tải mới nhất từ mạng về lưu
       return cache.addAll(FILES_TO_CACHE.map(url => new Request(url, { cache: 'reload' })));
     })
   );
-  self.skipWaiting(); // Kích hoạt SW ngay lập E.
+  self.skipWaiting();
 });
 
-// Kích hoạt Service Worker và dọn dẹp cache cũ
 self.addEventListener('activate', (event) => {
   console.log('SW: Đang kích hoạt...');
   event.waitUntil(
@@ -38,42 +36,28 @@ self.addEventListener('activate', (event) => {
       }));
     })
   );
-  return self.clients.claim(); // SW kiểm soát trang ngay lập E.
+  return self.clients.claim();
 });
 
-// Can thiệp vào các yêu cầu (fetch)
 self.addEventListener('fetch', (event) => {
-  // Chỉ xử lý các yêu cầu GET
-  if (event.request.method !== 'GET') {
-    return;
-  }
-  if (url.pathname.includes('/socket.io/') || url.port === '3000' || url.port === '5000') {
-    return; 
+  if (event.request.method !== 'GET') return;
+
+  // --- SỬA LỖI Ở ĐÂY: Phải khai báo biến url trước khi dùng ---
+  const url = new URL(event.request.url);
+
+  // Bỏ qua Socket.IO và các API Server (Port 3000, 5000)
+  // Logic: Nếu đường dẫn chứa socket.io HOẶC port là 3000/5000 -> Không cache
+  if (url.pathname.includes('/socket.io/') || url.port === '3000' || url.port === '5000' || url.pathname.includes('/stream')) {
+    return; // Trả về để mạng tự xử lý
   }
 
-  // Chiến lược: Ưu tiên cache (Cache First)
-  // Cố gắng tìm tài nguyên trong cache trước.
+  // Chiến lược: Cache First (Ưu tiên Cache) cho file tĩnh
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((response) => {
-        if (response) {
-          // Nếu tìm thấy trong cache, trả về nó
-          console.log(`SW: Lấy từ cache: ${event.request.url}`);
-          return response;
-        }
-
-        // Nếu không tìm thấy, đi lấy từ mạng
-        console.log(`SW: Lấy từ mạng: ${event.request.url}`);
-        return fetch(event.request).then((networkResponse) => {
-          // (Tùy chọn) Bạn có thể cache lại tài nguyên vừa lấy từ mạng ở đây
-          // cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-
-      }).catch((error) => {
-        console.error('SW: Lỗi fetch:', error);
-        // Có thể trả về một trang offline dự phòng ở đây
-      });
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request);
     })
   );
 });
