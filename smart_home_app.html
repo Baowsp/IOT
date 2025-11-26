@@ -390,7 +390,7 @@
             if (newNodeIp && newAiIp) {
                 nodeIp = newNodeIp; aiIp = newAiIp;
                 localStorage.setItem('nodeIp', nodeIp); localStorage.setItem('aiIp', aiIp);
-                document.getElementById('save-status').innerText = "✅ Đã lưu!";
+                alert("Đã lưu");
                 connectSocket();
                 setTimeout(() => showTab('controls'), 1000);
             }

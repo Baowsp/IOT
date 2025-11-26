@@ -47,6 +47,9 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
   }
+  if (url.pathname.includes('/socket.io/') || url.port === '3000' || url.port === '5000') {
+    return; 
+  }
 
   // Chiến lược: Ưu tiên cache (Cache First)
   // Cố gắng tìm tài nguyên trong cache trước.
