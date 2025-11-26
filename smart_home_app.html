@@ -236,6 +236,7 @@
         let socket;
         let nodeIp = localStorage.getItem('nodeIp') || '';
         let aiIp = localStorage.getItem('aiIp') || '';
+        let aiSocket;
         const NODE_PORT = 3000;
         const AI_PORT = 5000;
 
@@ -364,9 +365,23 @@
 
         function loadCameraStream() {
             if (!aiIp) return;
-            document.getElementById('camera-stream').src = `http://${aiIp}:${AI_PORT}/stream`;
-            document.getElementById('camera-stream').classList.remove('hidden');
-            document.getElementById('camera-placeholder').classList.add('hidden');
+
+            // Kết nối tới Python qua Socket.IO
+            if (aiSocket) aiSocket.disconnect();
+            
+            aiSocket = io(`http://${aiIp}:${AI_PORT}`, {
+                transports: ['websocket']
+            });
+
+            // Lắng nghe sự kiện nhận ảnh
+            aiSocket.on('cam_data', (base64Image) => {
+                const imgEl = document.getElementById('camera-stream');
+                // Gán dữ liệu Base64 trực tiếp vào src
+                imgEl.src = "data:image/jpeg;base64," + base64Image;
+                
+                imgEl.classList.remove('hidden');
+                document.getElementById('camera-placeholder').classList.add('hidden');
+            });
         }
         function handleCamError() {
             document.getElementById('camera-stream').classList.add('hidden');
