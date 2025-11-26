@@ -252,8 +252,12 @@
                 return;
             }
             if (socket) socket.disconnect();
-            socket = io(`http://${nodeIp}:${NODE_PORT}`, { transports: ['websocket', 'polling'] });
-
+            socket = io(`http://${nodeIp}:${NODE_PORT}`, { 
+                transports: ['websocket'], // Bỏ qua polling, dùng ngay WebSocket
+                upgrade: false,            // Tắt tính năng tự nâng cấp (vì đã dùng WS rồi)
+                reconnection: true,        // Tự động kết nối lại nếu mất mạng
+                reconnectionAttempts: 5    // Thử lại 5 lần
+            });
             socket.on('connect', () => {
                 document.getElementById('connection-status').innerHTML = '<span class="text-green-500">🟢 Đã kết nối</span>';
             });
