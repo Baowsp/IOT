@@ -230,6 +230,26 @@
             <button class="nav-btn p-3 rounded-xl transition-all" data-tab="settings" onclick="showTab('settings')"><i data-lucide="settings" class="w-6 h-6"></i></button>
         </div>
     </div>
+    <div id="alarm-popup" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-all p-4">
+        <div class="bg-red-600 w-full max-w-sm p-6 rounded-2xl shadow-2xl border-4 border-red-400 animate-pulse">
+            <div class="flex flex-col items-center text-center">
+                <div class="bg-white p-4 rounded-full mb-4 shadow-lg">
+                    <i data-lucide="siren" class="w-12 h-12 text-red-600"></i>
+                </div>
+                <h2 class="text-3xl font-black text-white uppercase mb-2">CẢNH BÁO!</h2>
+                <p class="text-white text-lg font-medium mb-6">Phát hiện xâm nhập & Còi đang hú!</p>
+                
+                <div class="flex flex-col gap-3 w-full">
+                    <button onclick="turnOffSiren()" class="w-full bg-white text-red-700 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-gray-100 transition-transform active:scale-95">
+                        TẮT CÒI NGAY
+                    </button>
+                    <button onclick="closeAlarm()" class="w-full bg-red-800 text-white py-3 rounded-xl font-semibold border border-red-400 hover:bg-red-900">
+                        Chỉ đóng thông báo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // LOGIC JAVASCRIPT GIỮ NGUYÊN NHƯ CŨ
@@ -237,6 +257,7 @@
         let nodeIp = localStorage.getItem('nodeIp') || '';
         let aiIp = localStorage.getItem('aiIp') || '';
         let aiSocket;
+        let isAlarmShowing = false;
         const NODE_PORT = 3000;
         const AI_PORT = 5000;
 
@@ -273,6 +294,14 @@
             socket.on('devices:update', (devices) => {
                 const currentAutoModes = getCurrentAutoStateFromDOM();
                 updateDevicesUI(devices, currentAutoModes);
+                if (devices.camBuzzer === true) {
+                    // Nếu còi đang BẬT và Popup chưa hiện -> Hiện Popup
+                    if (!isAlarmShowing) {
+                        showAlarmPopup();
+                    }
+                } else {
+                    // Nếu còi TẮT -> Reset trạng thái để lần sau có thể hiện lại
+                    isAlarmShowing = false;}
             });
             socket.on('mode:update', (autoModes) => {
                 updateAutoModesUI(autoModes);
@@ -429,6 +458,34 @@
         //     .catch(err => console.error('SW registration failed', err));
         // });
         // }
+        function showAlarmPopup() {
+            isAlarmShowing = true;
+            const popup = document.getElementById('alarm-popup');
+            popup.classList.remove('hidden');
+            
+            // Tự động chuyển sang tab Camera để xem ngay
+            showTab('camera'); 
+            
+            // Rung điện thoại (chỉ Android hỗ trợ)
+            if (navigator.vibrate) {
+                navigator.vibrate([500, 200, 500, 200, 1000]); 
+            }
+        }
+
+        function closeAlarm() {
+            document.getElementById('alarm-popup').classList.add('hidden');
+            // Lưu ý: Đóng popup nhưng không tắt còi (biến isAlarmShowing vẫn true để không hiện lại ngay lập tức)
+        }
+
+        function turnOffSiren() {
+            // Gửi lệnh tắt còi lên Server
+            if (socket && socket.connected) {
+                socket.emit('device:toggle', { device: 'camBuzzer', value: false });
+            }
+            // Đóng popup
+            document.getElementById('alarm-popup').classList.add('hidden');
+            isAlarmShowing = false;
+        }
     </script>
 </body>
 </html>
